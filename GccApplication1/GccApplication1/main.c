@@ -1,6 +1,6 @@
 #define F_CPU 16000000UL // Define CPU Frequency
 #include <avr/io.h>			/* Include AVR std. library file */
-#include <util/delay.h>			/* Include Delay header file */	
+#include <util/delay.h>			/* Include Delay header file */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,35 +15,29 @@
 
 //-----------------LDR-------------------
 
-void LDR(){	
+void LDR(){
 	
 	if((PINA & 0b00000100)==0b00000100){
 		DDRD|=0x10;
-		PORTD|=0x10;	
-		}
+		PORTD|=0x10;
+	}
 	else if((PINA & 0b00000100)==0b00000000){
 		PORTD=0x00;
 	}
-		
-	}
+	_delay_ms(50);
+}
 
 //--------------------------------Servo Motor-----------------
 
-void Servo_Wait()
-{
-	_delay_loop_2(0);
-	_delay_loop_2(0);
-	_delay_loop_2(0);
-	
+void Servo_INIT(){
+	//Configure TIMER1
+	TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11); //NON Inverted PWM
+	TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11); //PRESCALER=8 (FAST PWM)
+	ICR1=39999; //fPWM=50Hz (Period = 20ms Standard).
+	DDRD|=(1<<PD4)|(1<<PD5); //PWM Pins as Out
 }
 
-void Servo(){
-	DDRD = 0x20; //Makes RC0 output pin
-	PORTD = 0x00;
-	PORTD = 0x20;
-	_delay_us(1000);
-	PORTD = 0x00;
-	}
+
 
 //-------------------------Temperature Sensonr---------------
 
@@ -70,45 +64,45 @@ void lcdCommand( unsigned char cmd )
 	LCD_port = (LCD_port & 0x0F) | (cmd & 0xF0); //send upper nibble (1111 0000)
 	//this is doing to using LCD in 4 bit mode
 	
-	LCD_port &= ~ (1<<RS);	
+	LCD_port &= ~ (1<<RS);
 	
 	
-	LCD_port |= (1<<EN);		
+	LCD_port |= (1<<EN);
 	_delay_us(1);
-	LCD_port &= ~(1<<EN);     
+	LCD_port &= ~(1<<EN);
 
 	_delay_us(200);
 
 	LCD_port = (LCD_port & 0x0F) | (cmd << 4);  //send low nibble
-	LCD_port |= (1<<EN); 
+	LCD_port |= (1<<EN);
 	_delay_us(1);
-	LCD_port &= ~ (1<<EN); 
+	LCD_port &= ~ (1<<EN);
 	
 	_delay_ms(2);
 }
 void lcddata( unsigned char data )
 {
-	LCD_port = (LCD_port & 0x0F) | (data & 0xF0);  // sending upper nibble 
-	LCD_port |= (1<<RS); 
-	LCD_port|= (1<<EN);  
+	LCD_port = (LCD_port & 0x0F) | (data & 0xF0);  // sending upper nibble
+	LCD_port |= (1<<RS);
+	LCD_port|= (1<<EN);
 	_delay_us(1);
-	LCD_port &= ~ (1<<EN); 
+	LCD_port &= ~ (1<<EN);
 
 	_delay_us(200);
 
-	LCD_port = (LCD_port & 0x0F) | (data << 4); 
-	LCD_port |= (1<<EN); 
+	LCD_port = (LCD_port & 0x0F) | (data << 4);
+	LCD_port |= (1<<EN);
 	_delay_us(1);
-	LCD_port &= ~ (1<<EN); 
+	LCD_port &= ~ (1<<EN);
 	
 	_delay_ms(2);
 }
-void lcdInit(void)			
+void lcdInit(void)
 {
-	 DDRB = 0xFF;			
-	_delay_ms(20);			
+	DDRB = 0xFF;
+	_delay_ms(20);
 	
-	lcdCommand(0x02);		// send for 4 bit initialization of LCD 
+	lcdCommand(0x02);		// send for 4 bit initialization of LCD
 	lcdCommand(0x28);        // 2 line, 5*7 matrix in 4-bit mode
 	lcdCommand(0x0E);        // Display on cursor on(we can send 0x0c or 0x0E)
 	lcdCommand(0x06);        // Increment cursor (shift cursor to right)
@@ -116,32 +110,32 @@ void lcdInit(void)
 	_delay_ms(2);
 	
 }
-void lcd_Print (char *str)		
+void lcd_Print (char *str)
 {
 	int i;
-	for(i=0;str[i]!=0;i++)		
+	for(i=0;str[i]!=0;i++)
 	{
 		lcddata (str[i]);
 	}
 }
 void LCD_Clear()
 {
-	lcdCommand (0x01);		
+	lcdCommand (0x01);
 	_delay_ms(2);
-	lcdCommand (0x80);		
+	lcdCommand (0x80);
 }
 
 //----------------------------Keypad------------------
 
 unsigned char keypad()
 {
-	PORTC = 0b11111110; 
- 	if ((PINC & (1<<PINC4)) == 0) 
+	PORTC = 0b11111110;
+	if ((PINC & (1<<PINC4)) == 0)
 	{
 		_delay_ms(20);
 		return '7';
 	}
- 	else if((PINC & (1<<PINC5)) == 0)
+	else if((PINC & (1<<PINC5)) == 0)
 	{
 		_delay_ms(20);
 		return '8';
@@ -151,10 +145,10 @@ unsigned char keypad()
 		_delay_ms(20);
 		return '9';
 	}
-	PORTC = 0b11111101; 
-	if ((PINC & (1<<PINC4)) == 0) 
+	PORTC = 0b11111101;
+	if ((PINC & (1<<PINC4)) == 0)
 	{
-		_delay_ms(20); 
+		_delay_ms(20);
 		return '4';
 	}
 	else if((PINC & (1<<PINC5)) == 0)
@@ -166,27 +160,27 @@ unsigned char keypad()
 	{
 		_delay_ms(20);
 		return '6';
-	}	
-	PORTC = 0b11111011; 
-	if ((PINC & (1<<PINC4)) == 0) 
+	}
+	PORTC = 0b11111011;
+	if ((PINC & (1<<PINC4)) == 0)
 	{
-		_delay_ms(20); 
+		_delay_ms(20);
 		return '1';
 	}
-	else if ((PINC & (1<<PINC5)) == 0) 
+	else if ((PINC & (1<<PINC5)) == 0)
 	{
-		_delay_ms(20); 
+		_delay_ms(20);
 		return '2';
 	}
 	else if((PINC & (1<<PINC6)) == 0)
 	{
 		_delay_ms(20);
 		return '3';
-	}	
+	}
 	PORTC = 0b11110111;
 	if ((PINC & (1<<PINC5)) == 0)
 	{
-		_delay_ms(20); 
+		_delay_ms(20);
 		return '0';
 	}
 	
@@ -195,10 +189,10 @@ unsigned char keypad()
 
 //------------------------------ STEPPER MOTORS-----------------
 
-	//PORTD = 0x0C; - 0 degree       a
-	//PORTD = 0x06; - 90 degrees     b
-	//PORTD = 0x03; - 180 degrees    c
-	//PORTD = 0x09  - 270            d
+//PORTD = 0x0C; - 0 degree       a
+//PORTD = 0x06; - 90 degrees     b
+//PORTD = 0x03; - 180 degrees    c
+//PORTD = 0x09  - 270            d
 
 
 //------------------------------  Ball Holder STEPPER MOTORS-----------------
@@ -209,7 +203,7 @@ void ball_holder_stepper(char a){
 	DDRD |= 0x0F;
 	int period;
 	//DDRD = 0x0F;		/* Make PORTD lower pins as output */
-	period = 100;		/* Set period in between two steps */
+	period = 50;		/* Set period in between two steps */
 	
 	if(a=='a'){
 		PORTD = 0x06;
@@ -217,7 +211,7 @@ void ball_holder_stepper(char a){
 	}
 	else if(a=='b'){
 		PORTD = 0x03;
-		_delay_ms(period);	
+		_delay_ms(period);
 	}
 	else if(a=='c'){
 		PORTD = 0x09;
@@ -234,37 +228,37 @@ void ball_holder_stepper(char a){
 
 int A(){
 	PORTA=0x20;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int B(){
 	
 	PORTA=0x40;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int C(){
 	
 	PORTA=0x30;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int D(){
 	
 	PORTA=0xc0;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int E(){
 	
 	PORTA=0x10;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int F(){
 	
 	PORTA=0x08;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 int G(){
 	
 	PORTA=0x50;
-	_delay_ms(100);
+	_delay_ms(50);
 }
 
 int stepper_motor(int k){
@@ -291,8 +285,8 @@ int stepper_motor(int k){
 		case 7:
 		G();
 		break;
-		}
-		return 0;
+	}
+	return 0;
 }
 
 
@@ -300,14 +294,14 @@ int stepper_motor(int k){
 
 void InitPWM1()
 {
-	TCCR2=(1<<WGM20)|(1<<WGM21)|(2<<COM20)|(2<<CS20);
-	DDRD|=(1<<PD7);	
+	TCCR2 |= (1<<WGM20)|(1<<WGM21|1<<COM21)|(1<<CS20)|(0<<CS21)|(0<<CS22);
+	DDRD |= (1<<PD7);
 }
 
 void InitPWM2()
 {
-	TCCR0=(1<<WGM20)|(1<<WGM21)|(2<<COM20)|(2<<CS20);
-	DDRB|=(1<<PB3);	
+	TCCR0 = (1<<WGM00) | (1<<WGM01) | (1<<COM01) | (1<<CS00);
+	DDRB|=(1<<PB3);
 }
 
 void SetPWMOutput1(uint8_t duty)
@@ -344,219 +338,164 @@ int temperature(){
 	
 	if(ret>25){
 		return 0;
-		}
+	}
 	else{
 		return 1;
 	}
 }
 
 
-int main(void) 
+int main(void)
 {
 	srand(time(NULL));
-	//-------------------------------enter minimum speed------------------------		
-		
-		unsigned char x;
-		DDRC = 0x0F ;
-		PORTC =0xF0;//11110000 Make all 4 columns 1 and rows 0
-		
-		lcdInit();
-		lcd_Print("Enter Minimun Speed:");
-		lcdCommand(0xC0);
-		
-		int w=1;
-		int temp=0;
-		int speed1=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
+	//-------------------------------enter minimum speed------------------------
+	
+	unsigned char x;
+	DDRC = 0x0F ;
+	PORTC =0xF0;//11110000 Make all 4 columns 1 and rows 0
+	
+	lcdInit();
+	lcd_Print("Enter Minimun Speed:");
+	lcdCommand(0xC0);
+	
+	int w=3;
+	int temp=0;
+	int speed1=0;
+	while(w>0){
+		x = keypad();
+		if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
+			lcddata(x);
+			temp=(int)x-48;
+			speed1=speed1*10+temp;
+			w-=1;
 		}
-		
-		lcddata(x);
-		temp=(int)x-48;
-		speed1=speed1*10+temp;
-		
-		w=1;
-		temp=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
+	}
+	
+	//------------------------Enter Maximum Speed---------------------------------------
+	
+	lcdInit();
+	lcd_Print("Enter Maximum Speed:");
+	lcdCommand(0xC0);
+	
+	w=3;
+	int speed2=0;
+	while(w>0){
+		x = keypad();
+		if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
+			lcddata(x);
+			temp=(int)x-48;
+			speed2=speed2*10+temp;
+			w-=1;
 		}
-		lcddata(x);
-		temp=(int)x-48;
-		speed1=speed1*10+temp;
-		
-		
-		w=1;
-		temp=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
-		}
-		lcddata(x);
-		temp=(int)x-48;
-		speed1=speed1*10+temp;
-		
-		//------------------------Enter Maximum Speed---------------------------------------
-		
-		lcdInit();
-		lcd_Print("Enter Maximum Speed:");
-		lcdCommand(0xC0);
-		
-		w=1;
-		temp=0;
-		int speed2=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
-		}
-		lcddata(x);
-		temp=(int)x-48;
-		speed2=speed2*10+temp;
-		
-		w=1;
-		temp=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
-		}
-		lcddata(x);
-		temp=(int)x-48;
-		speed2=speed2*10+temp;
-		
-		w=1;
-		temp=0;
-		while(w>0){
-			x = keypad();
-			if(x=='0'||x=='1'||x=='2'||x=='3'||x=='4'||x=='5'||x=='6'||x=='7'||x=='8'||x=='9'){
-				w-=1;
-			}
-		}
-		lcddata(x);
-		temp=(int)x-48;
-		speed2=speed2*10+temp;
-		
-		
-		
-		 //----------get ready notification-------------
-		 
-		 
-		_delay_ms(50);
-		LCD_Clear();
-		lcd_Print("Get ready");
-		_delay_ms(50);
-		LCD_Clear();
-					
+	}
+	
+	//----------get ready notification-------------
+	
+	
+	_delay_ms(50);
+	LCD_Clear();
+	lcd_Print("Get ready");
+	_delay_ms(50);
+	LCD_Clear();
+	
 	
 
-		int lower =speed1, upper = speed2;
-		char pos='a';
-		int k;
-		for(int g=0;g<20;g++){
+	int lower =speed1, upper = speed2;
+	char pos='a';
+	int k;
+	for(int g=0;g<20;g++){
+		
+		if(temperature()==1){
 			
-			if(temperature()==1){
-				
-				LDR();
-			   //----------dc motor speed control-------------
-		
-				uint8_t num = (rand() % (upper - lower + 1)) + lower;
-		
-				int num1 = num;
-				char snum[5];
-				itoa(num1, snum, 10);
-				lcd_Print(snum);
-				lcd_Print(" kmh");
-		
-		
-				//----------make the direction of the machine-------------
-		
-				
-				_delay_ms(100);
-				
-				DDRA=0xF0;
-				k=(rand()%7)+1;
-				stepper_motor(k);
-				
-				Servo();
-				_delay_ms(100);
-				
-				//----------mControl Speed----------------
-				
-				InitPWM1();
-				InitPWM2();
-		
-				if(num1>80 && num1<120){
-					SetPWMOutput1(120);
-					SetPWMOutput2(10);
-				}
-				else if(num1>120 && num1<130){
-					SetPWMOutput1(10);
-					SetPWMOutput2(120);
-				}
-				else{
-					SetPWMOutput1(5);
-					SetPWMOutput2(5);
-				}
-		
-				_delay_ms(100);
-		
-				//-------------Buzzer Alarm---------------
-	
-				DDRA=0x08;
-				PORTA=0x08;
-				_delay_ms(100);
-				PORTA=0x00;
-	
-				//----------ball holder rotation-------------
-		
-				_delay_ms(50);
-				DDRD |= 0xFF;
-				PORTD |= 0xFF;
-		
-				if(pos=='a'){
-					ball_holder_stepper(pos);
-					pos='b';
-				}
-				else if(pos=='b'){
-					ball_holder_stepper(pos);
-					pos='c';
-				}
-				else if(pos=='c'){
-					ball_holder_stepper(pos);
-					pos='d';
-				}
-				else if(pos=='d'){
-					ball_holder_stepper(pos);
-					pos='a';
-				}
-				
-				else{
-				}
-		
-				LCD_Clear();
-				_delay_ms(100);
+			LDR();
+			//----------dc motor speed control-------------
+			
+			uint8_t num = (rand() % (upper - lower + 1)) + lower;
+			
+			int num1 = num;
+			char snum[5];
+			itoa(num1, snum, 10);
+			lcd_Print(snum);
+			lcd_Print(" kmh");
+			
+			
+			//----------make the direction of the machine-------------
+			
+			
+			
+			DDRA=0xF0;
+			k=(rand()%7)+1;
+			stepper_motor(k);
+			
+			Servo_INIT();
+			OCR1A=124 + (rand() % 125);
+			_delay_ms(100);
+			
+			//----------mControl Speed----------------
+			
+			InitPWM1();
+			InitPWM2();
+			
+			if(num1>80 && num1<120){
+				SetPWMOutput1(250);
+				SetPWMOutput2(10);
+			}
+			else if(num1>120 && num1<130){
+				SetPWMOutput1(10);
+				SetPWMOutput2(250);
+			}
+			else{
+				SetPWMOutput1(10);
+				SetPWMOutput2(10);
+			}
+			
+			_delay_ms(10);
+			
+			//-------------Buzzer Alarm---------------
+			
+			DDRA=0x08;
+			PORTA=0x08;
+			_delay_ms(50);
+			PORTA=0x00;
+			
+			//----------ball holder rotation-------------
+			
+			DDRD |= 0xFF;
+			PORTD |= 0xFF;
+			
+			if(pos=='a'){
+				ball_holder_stepper(pos);
+				pos='b';
+			}
+			else if(pos=='b'){
+				ball_holder_stepper(pos);
+				pos='c';
+			}
+			else if(pos=='c'){
+				ball_holder_stepper(pos);
+				pos='d';
+			}
+			else if(pos=='d'){
+				ball_holder_stepper(pos);
+				pos='a';
 			}
 			
 			else{
-				lcdInit();
-				lcd_Print("High Temperature");
-				DDRA=0x02;
-				PORTA=0x02;
-				_delay_ms(10000000);
-					
 			}
+			
+			LCD_Clear();
 		}
+		
+		else{
+			lcdInit();
+			lcd_Print("High Temperature");
+			DDRA=0x02;
+			PORTA=0x02;
+			while(1);
+			
+		}
+	}
 
-	return 0;	
+	return 0;
 
 }
